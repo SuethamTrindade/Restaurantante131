@@ -1,0 +1,47 @@
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Garante que o app ocupe a altura total */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  background-color: #f0f2f5; /* Cor de fundo padrão de dashboards profissionais */
+}
+
+/* Remove a estilização padrão do Vite que centralizava tudo */
+#root {
+  text-align: left;
+  display: block;
+  max-width: none;
+  padding: 0;
+}
+
+/* Estilo para o Logo no Header */
+.logo-area {
+  display: flex;
+  align-items: center;
+  margin-right: 40px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  white-space: nowrap;
+}
+
+/* Ajuste responsivo para o conteúdo */
+.site-layout-content {
+  margin: 24px 16px;
+  padding: 24px;
+  min-height: 280px;
+}
+
+/* Em telas maiores, centraliza o conteúdo com um limite para não esticar demais */
+@media (min-width: 1200px) {
+  .site-layout-content {
+    max-width: 1200px;
+    margin: 24px auto; /* Centraliza horizontalmente */
+  }
+}
