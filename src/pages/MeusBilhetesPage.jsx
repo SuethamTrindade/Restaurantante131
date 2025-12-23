@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Card, Tag, Typography, Button, Empty } from 'antd';
-import { QRCodeSVG } from 'qrcode.react'; // Se não tiver essa lib, usaremos texto simples, sem problemas.
 import { RifaDAO } from '../daos/RifaDAO';
 import { Link } from 'react-router-dom';
 import { HomeOutlined, CheckCircleOutlined } from '@ant-design/icons';

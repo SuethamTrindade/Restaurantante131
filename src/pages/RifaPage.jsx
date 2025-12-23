@@ -1,40 +1,50 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom'; // Para pegar o ID da URL
 import { 
   Card, Button, Modal, message, Typography, Statistic, 
-  Radio, Input, Form, Divider, Space, QRCode 
+  Radio, Input, Form, Divider, Space, QRCode, Spin 
 } from 'antd';
 import { 
-  CheckCircleOutlined, 
-  QrcodeOutlined, 
-  CreditCardOutlined, 
-  CopyOutlined,
-  LockOutlined,
-  BankOutlined
+  CheckCircleOutlined, QrcodeOutlined, CreditCardOutlined, 
+  CopyOutlined, ArrowLeftOutlined 
 } from '@ant-design/icons';
-import { RifaDAO } from '../daos/RifaDAO'; // Importe o novo DAO
+import { RifaDAO } from '../daos/RifaDAO';
 
 const { Title, Text } = Typography;
 
 export default function RifaPage() {
+  const { id } = useParams(); // Pega o ID da URL (ex: /rifa/1)
+  const navigate = useNavigate();
+  const [prize, setPrize] = useState(null);
+
   const [selectedNumbers, setSelectedNumbers] = useState([]);
+  const [soldNumbers, setSoldNumbers] = useState([]);
+  
+  // Estados do Modal de Pagamento
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('pix');
-  const [cardType, setCardType] = useState('credito'); // Estado para Crédito/Débito
+  const [cardType, setCardType] = useState('credito');
   const [loading, setLoading] = useState(false);
-  
-  // Estado dos números já vendidos (carregado do DAO)
-  const [soldNumbers, setSoldNumbers] = useState([]);
 
-  // Carrega números vendidos ao iniciar
+  // Carrega dados do prêmio e números vendidos
   useEffect(() => {
-    setSoldNumbers(RifaDAO.getAllSoldNumbers());
-  }, []);
+    const p = RifaDAO.getPrizeById(id);
+    if (!p) {
+      message.error('Prêmio não encontrado');
+      navigate('/');
+      return;
+    }
+    setPrize(p);
+    setSoldNumbers(RifaDAO.getSoldNumbers(p.id));
+  }, [id, navigate]);
 
-  const totalValue = selectedNumbers.length * 10;
+  if (!prize) return <div style={{textAlign: 'center', padding: 50}}><Spin size="large"/></div>;
+
+  const totalValue = selectedNumbers.length * prize.price;
 
   const toggleNumber = (num) => {
     if (soldNumbers.includes(num)) {
-      message.error('Este número já foi vendido!');
+      message.error('Número indisponível');
       return;
     }
     if (selectedNumbers.includes(num)) {
@@ -44,185 +54,114 @@ export default function RifaPage() {
     }
   };
 
-  const handleCheckoutClick = () => {
-    if (selectedNumbers.length === 0) return;
-    setIsModalOpen(true);
-  };
-
   const handleConfirmPayment = () => {
     setLoading(true);
-    
     setTimeout(() => {
-      // 1. Gerar os Bilhetes com Código de Rastreio
       const newTickets = selectedNumbers.map(num => ({
+        prizeId: prize.id,
+        prizeName: prize.name,
         number: num,
-        // Gera um código tipo: RF-NUMERO-ALEATORIO (ex: RF-10-X9D2)
-        trackingCode: `RF-${num}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+        trackingCode: `RF-${prize.id}-${num}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
         method: paymentMethod,
-        cardType: paymentMethod === 'card' ? (cardType === 'credito' ? 'Crédito' : 'Débito') : null,
         date: new Date().toLocaleDateString('pt-BR'),
         status: 'Pago'
       }));
 
-      // 2. Salvar no "Banco de Dados" (LocalStore)
       RifaDAO.saveTickets(newTickets);
-
-      // 3. Atualizar a tela
-      setSoldNumbers(RifaDAO.getAllSoldNumbers()); // Atualiza os vermelhos
+      setSoldNumbers([...soldNumbers, ...selectedNumbers]);
       setLoading(false);
       setIsModalOpen(false);
       setSelectedNumbers([]);
 
       Modal.success({
-        title: 'Compra Confirmada!',
-        content: (
-          <div>
-            <p>Seus {newTickets.length} bilhetes foram gerados com sucesso.</p>
-            <p>Acesse o menu <b>"Meus Bilhetes"</b> para ver seus códigos de rastreio.</p>
-          </div>
-        ),
+        title: 'Compra Realizada!',
+        content: 'Verifique seus bilhetes no menu "Meus Bilhetes". Boa sorte!',
       });
-    }, 2000);
+    }, 1500);
   };
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '100px' }}>
-      
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')} style={{ marginBottom: 15 }}>
+        Voltar para Prêmios
+      </Button>
+
       <Card style={{ marginBottom: 20, textAlign: 'center', borderTop: '4px solid #1890ff' }}>
-        <Title level={2}>🍀 Rifa do iPhone 15 Pro</Title>
-        <Text type="secondary">Escolha seus números e pague com PIX, Crédito ou Débito.</Text>
+        <Title level={2}>{prize.image} {prize.name}</Title>
+        <Text type="secondary">Clique nos números abaixo para selecionar.</Text>
         <div style={{ marginTop: 15, display: 'flex', justifyContent: 'center', gap: 20 }}>
-          <Statistic title="Valor por Número" value={10} precision={2} prefix="R$" />
-          <Statistic title="Prêmio" value="iPhone 15" prefix="📱" />
+          <Statistic title="Preço" value={prize.price} precision={2} prefix="R$" />
+          <Statistic title="Números" value={prize.totalNumbers} />
         </div>
       </Card>
 
       <div className="status-legend">
-        <div className="legend-item"><span className="dot available"></span> Disponível</div>
-        <div className="legend-item"><span className="dot selected"></span> Selecionado</div>
+        <div className="legend-item"><span className="dot available"></span> Livre</div>
+        <div className="legend-item"><span className="dot selected"></span> Seu</div>
         <div className="legend-item"><span className="dot sold"></span> Vendido</div>
       </div>
 
       <div className="numbers-grid">
-        {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => {
+        {Array.from({ length: prize.totalNumbers > 100 ? 100 : prize.totalNumbers }, (_, i) => i + 1).map((num) => {
           const isSold = soldNumbers.includes(num);
           const isSelected = selectedNumbers.includes(num);
-          let className = 'number-btn';
-          if (isSold) className += ' sold';
-          else if (isSelected) className += ' selected';
-
           return (
-            <div key={num} className={className} onClick={() => toggleNumber(num)}>
+            <div 
+              key={num} 
+              className={`number-btn ${isSold ? 'sold' : ''} ${isSelected ? 'selected' : ''}`} 
+              onClick={() => toggleNumber(num)}
+            >
               {num.toString().padStart(2, '0')}
             </div>
           );
         })}
+        {prize.totalNumbers > 100 && <div style={{gridColumn: '1 / -1', textAlign: 'center', color: '#888'}}>...e mais números...</div>}
       </div>
 
       {selectedNumbers.length > 0 && (
         <div className="floating-cart">
           <div className="cart-info">
-            <span style={{ fontSize: '14px', opacity: 0.8 }}>{selectedNumbers.length} números</span>
-            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>R$ {totalValue.toFixed(2)}</span>
+            <span>{selectedNumbers.length} x R$ {prize.price}</span>
+            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Total: R$ {totalValue.toFixed(2)}</span>
           </div>
-          <Button type="primary" size="large" icon={<CheckCircleOutlined />} onClick={handleCheckoutClick}>
+          <Button type="primary" size="large" onClick={() => setIsModalOpen(true)}>
             Pagar Agora
           </Button>
         </div>
       )}
 
-      {/* MODAL DE PAGAMENTO */}
-      <Modal
-        title="Finalizar Compra"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={400}
-        centered
-      >
-        <div style={{ marginBottom: 20, textAlign: 'center' }}>
-           <Text type="secondary">Total a pagar: <b style={{ color: '#1890ff', fontSize: 18 }}>R$ {totalValue.toFixed(2)}</b></Text>
-        </div>
-
-        {/* Escolha PIX ou CARTÃO */}
+      {/* MODAL DE PAGAMENTO (QR CODE CORRIGIDO) */}
+      <Modal open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null} title="Pagamento Seguro">
         <Radio.Group 
-          value={paymentMethod} 
-          onChange={(e) => setPaymentMethod(e.target.value)} 
-          style={{ width: '100%', marginBottom: 20 }}
-          buttonStyle="solid"
-          size="large"
+            value={paymentMethod} 
+            onChange={(e) => setPaymentMethod(e.target.value)} 
+            style={{ width: '100%', marginBottom: 20 }} 
+            buttonStyle="solid"
+            size="large"
         >
-          <Radio.Button value="pix" style={{ width: '50%', textAlign: 'center' }}>
-            <QrcodeOutlined /> PIX
-          </Radio.Button>
-          <Radio.Button value="card" style={{ width: '50%', textAlign: 'center' }}>
-            <CreditCardOutlined /> Cartão
-          </Radio.Button>
+          <Radio.Button value="pix" style={{ width: '50%', textAlign: 'center' }}><QrcodeOutlined /> PIX</Radio.Button>
+          <Radio.Button value="card" style={{ width: '50%', textAlign: 'center' }}><CreditCardOutlined /> Cartão</Radio.Button>
         </Radio.Group>
 
-        <Divider style={{ margin: '12px 0' }} />
-
-        {/* --- OPÇÃO PIX --- */}
         {paymentMethod === 'pix' && (
-          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 15 }}>
-            <Text>Escaneie o QR Code:</Text>
-            <div style={{ padding: 10, border: '1px solid #eee', borderRadius: 8, alignSelf: 'center' }}>
-              <QRCode value={`PIX-TESTE-${totalValue}`} size={160} />
-            </div>
-            <Button icon={<CopyOutlined />} onClick={() => message.success('Código copiado!')}>
-              Copiar Código PIX
-            </Button>
-            <Text type="secondary" style={{ fontSize: 12 }}>Aprovação imediata</Text>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 15, alignItems: 'center' }}>
+            {/* USO DO COMPONENTE NATIVO DO ANTD PARA EVITAR ERROS */}
+            <QRCode value={`00020101021226580014BR.GOV.BCB.PIX${totalValue.toFixed(2)}`} size={200} />
+            <Text type="secondary">Leia o QR Code acima no app do seu banco</Text>
+            <Button icon={<CopyOutlined />}>Copiar Código PIX</Button>
           </div>
         )}
 
-        {/* --- OPÇÃO CARTÃO (CRÉDITO / DÉBITO) --- */}
         {paymentMethod === 'card' && (
           <Form layout="vertical">
-            {/* SELEÇÃO CRÉDITO OU DÉBITO */}
-            <Form.Item label="Função do Cartão" required style={{ marginBottom: 12 }}>
-              <Radio.Group 
-                value={cardType} 
-                onChange={e => setCardType(e.target.value)}
-                block
-                optionType="button"
-              >
-                <Radio value="credito">Crédito</Radio>
-                <Radio value="debito">Débito</Radio>
-              </Radio.Group>
-            </Form.Item>
-
-            <Form.Item label="Número do Cartão" required style={{ marginBottom: 12 }}>
-              <Input prefix={<CreditCardOutlined />} placeholder="0000 0000 0000 0000" />
-            </Form.Item>
-            
-            <Space>
-              <Form.Item label="Validade" required style={{ marginBottom: 12 }}>
-                <Input placeholder="MM/AA" style={{ width: 100 }} />
-              </Form.Item>
-              <Form.Item label="CVV" required style={{ marginBottom: 12 }}>
-                <Input placeholder="123" style={{ width: 80 }} />
-              </Form.Item>
-            </Space>
-
-            <Form.Item label="Nome no Cartão" required style={{ marginBottom: 12 }}>
-              <Input placeholder="Como está no cartão" />
-            </Form.Item>
+            <Form.Item label="Tipo"><Radio.Group value={cardType} onChange={e => setCardType(e.target.value)}><Radio value="credito">Crédito</Radio><Radio value="debito">Débito</Radio></Radio.Group></Form.Item>
+            <Form.Item label="Número"><Input placeholder="0000 0000 0000 0000" prefix={<CreditCardOutlined />} /></Form.Item>
+            <Space><Input placeholder="MM/AA" /><Input placeholder="CVV" /></Space>
           </Form>
         )}
 
         <Divider />
-
-        <Button 
-          type="primary" 
-          block 
-          size="large" 
-          onClick={handleConfirmPayment}
-          loading={loading}
-          style={{ height: '50px', fontWeight: 'bold' }}
-        >
-          {paymentMethod === 'pix' ? 'Já fiz o pagamento' : `Pagar com ${cardType === 'credito' ? 'Crédito' : 'Débito'}`}
-        </Button>
+        <Button type="primary" block size="large" onClick={handleConfirmPayment} loading={loading}>Confirmar Pagamento</Button>
       </Modal>
     </div>
   );

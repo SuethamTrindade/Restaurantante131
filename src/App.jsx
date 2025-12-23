@@ -1,35 +1,43 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Drawer, Avatar, Button, FloatButton } from 'antd';
+import { Layout, Menu, Button, Drawer, Avatar, FloatButton } from 'antd';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  GiftOutlined, 
-  HomeOutlined, 
-  TrophyOutlined,
-  WhatsAppOutlined,
-  UserOutlined
+  GiftOutlined, HomeOutlined, TrophyOutlined, 
+  WhatsAppOutlined, UserOutlined, DashboardOutlined 
 } from '@ant-design/icons';
-import './App.css'; // Importante para o estilo da rifa
+import './App.css';
 
+// Importação das Páginas
+import PremiosPage from './pages/PremiosPage';
 import RifaPage from './pages/RifaPage';
-import MeusBilhetesPage from './pages/MeusBilhetesPage'; // <--- Importe a nova página
+import MeusBilhetesPage from './pages/MeusBilhetesPage';
+import AdminPage from './pages/AdminPage';
 
 const { Header, Content, Footer } = Layout;
 
 function AppMenu() {
   const location = useLocation();
-  const menuItems = [
-    { key: '/', icon: <HomeOutlined />, label: <Link to="/">Sorteio Atual</Link> },
-    { key: '/meus-numeros', icon: <GiftOutlined />, label: <Link to="/meus-numeros">Meus Bilhetes</Link> },
-    { key: '/premios', icon: <TrophyOutlined />, label: <Link to="/premios">Prêmios</Link> },
-  ];
+  // Se estiver na rota /admin, mostra menu de admin, senão menu de cliente
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  if (isAdmin) {
+    return (
+      <Menu theme="dark" mode="horizontal" selectedKeys={[location.pathname]} style={{ background: 'transparent', flex: 1, justifyContent: 'center' }}
+        items={[
+          { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Dashboard</Link> },
+          { key: '/', icon: <HomeOutlined />, label: <Link to="/">Voltar ao Site</Link> },
+        ]}
+      />
+    );
+  }
 
   return (
-    <Menu
-      theme="dark"
-      mode="horizontal"
-      selectedKeys={[location.pathname]}
-      items={menuItems}
-      style={{ flex: 1, minWidth: 0, justifyContent: 'center', background: 'transparent' }}
+    <Menu theme="dark" mode="horizontal" selectedKeys={[location.pathname]} style={{ background: 'transparent', flex: 1, justifyContent: 'center' }}
+      items={[
+        { key: '/', icon: <HomeOutlined />, label: <Link to="/">Prêmios</Link> },
+        { key: '/meus-numeros', icon: <GiftOutlined />, label: <Link to="/meus-numeros">Meus Bilhetes</Link> },
+        { key: '/admin', icon: <UserOutlined />, label: <Link to="/admin">Sou Admin</Link> },
+      ]}
     />
   );
 }
@@ -40,14 +48,7 @@ export default function App() {
   return (
     <Router>
       <Layout style={{ minHeight: '100vh' }}>
-        <Header style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          padding: '0 20px',
-          background: '#001529',
-          position: 'sticky', top: 0, zIndex: 1000
-        }}>
+        <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', background: '#001529', position: 'sticky', top: 0, zIndex: 1000 }}>
           <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
             <GiftOutlined style={{ color: '#52c41a' }} />
             <span>RifaDaSorte</span>
@@ -63,25 +64,28 @@ export default function App() {
         <Content>
           <div className="site-layout-content">
             <Routes>
-              <Route path="/" element={<RifaPage />} />
-              {/* Conecta a rota /meus-numeros à nova página */}
+              {/* ÁREA DO CLIENTE */}
+              <Route path="/" element={<PremiosPage />} />
+              <Route path="/rifa/:id" element={<RifaPage />} />
               <Route path="/meus-numeros" element={<MeusBilhetesPage />} />
-              <Route path="/premios" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Galeria de Prêmios</h2></div>} />
+              
+              {/* ÁREA DO ADMIN */}
+              <Route path="/admin" element={<AdminPage />} />
             </Routes>
           </div>
         </Content>
 
         <Footer style={{ textAlign: 'center', background: '#001529', color: 'rgba(255,255,255,0.6)' }}>
-          RifaDaSorte ©2025 - Participe e Concorra!
+          RifaDaSorte ©2025
         </Footer>
 
         <Drawer title="Minha Conta" placement="right" onClose={() => setOpen(false)} open={open}>
-          <p>Histórico de Compras</p>
-          <p>Configurações</p>
+          <p>Editar Perfil</p>
+          <Link to="/admin"><Button block style={{marginBottom: 10}}>Acessar Painel Admin</Button></Link>
           <Button danger block>Sair</Button>
         </Drawer>
         
-        <FloatButton icon={<WhatsAppOutlined />} type="primary" style={{ right: 24, bottom: 100 }} tooltip="Suporte WhatsApp" />
+        <FloatButton icon={<WhatsAppOutlined />} type="primary" style={{ right: 24, bottom: 80 }} tooltip="Suporte" />
       </Layout>
     </Router>
   );
