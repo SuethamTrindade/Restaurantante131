@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, Button, Modal, message, Typography, Statistic, 
   Radio, Input, Form, Divider, Space, QRCode 
@@ -8,26 +8,32 @@ import {
   QrcodeOutlined, 
   CreditCardOutlined, 
   CopyOutlined,
-  LockOutlined
+  LockOutlined,
+  BankOutlined
 } from '@ant-design/icons';
+import { RifaDAO } from '../daos/RifaDAO'; // Importe o novo DAO
 
 const { Title, Text } = Typography;
-
-// Simulação de números já vendidos
-const SOLD_NUMBERS = [5, 12, 44, 78, 99];
 
 export default function RifaPage() {
   const [selectedNumbers, setSelectedNumbers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('pix');
+  const [cardType, setCardType] = useState('credito'); // Estado para Crédito/Débito
   const [loading, setLoading] = useState(false);
+  
+  // Estado dos números já vendidos (carregado do DAO)
+  const [soldNumbers, setSoldNumbers] = useState([]);
 
-  // Calcula o total
+  // Carrega números vendidos ao iniciar
+  useEffect(() => {
+    setSoldNumbers(RifaDAO.getAllSoldNumbers());
+  }, []);
+
   const totalValue = selectedNumbers.length * 10;
 
-  // Selecionar número
   const toggleNumber = (num) => {
-    if (SOLD_NUMBERS.includes(num)) {
+    if (soldNumbers.includes(num)) {
       message.error('Este número já foi vendido!');
       return;
     }
@@ -38,28 +44,41 @@ export default function RifaPage() {
     }
   };
 
-  // Abrir Modal de Pagamento
   const handleCheckoutClick = () => {
     if (selectedNumbers.length === 0) return;
     setIsModalOpen(true);
   };
 
-  // Simular Processamento do Pagamento
   const handleConfirmPayment = () => {
     setLoading(true);
-    // Simula delay de rede (2 segundos)
+    
     setTimeout(() => {
+      // 1. Gerar os Bilhetes com Código de Rastreio
+      const newTickets = selectedNumbers.map(num => ({
+        number: num,
+        // Gera um código tipo: RF-NUMERO-ALEATORIO (ex: RF-10-X9D2)
+        trackingCode: `RF-${num}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+        method: paymentMethod,
+        cardType: paymentMethod === 'card' ? (cardType === 'credito' ? 'Crédito' : 'Débito') : null,
+        date: new Date().toLocaleDateString('pt-BR'),
+        status: 'Pago'
+      }));
+
+      // 2. Salvar no "Banco de Dados" (LocalStore)
+      RifaDAO.saveTickets(newTickets);
+
+      // 3. Atualizar a tela
+      setSoldNumbers(RifaDAO.getAllSoldNumbers()); // Atualiza os vermelhos
       setLoading(false);
       setIsModalOpen(false);
-      setSelectedNumbers([]); // Limpa seleção
-      
+      setSelectedNumbers([]);
+
       Modal.success({
-        title: 'Pagamento Aprovado!',
+        title: 'Compra Confirmada!',
         content: (
           <div>
-            <p>Seus números foram confirmados com sucesso.</p>
-            <p>Boa sorte no sorteio!</p>
-            <Text type="secondary" style={{fontSize: 12}}>ID da Transação: #TX{Math.floor(Math.random()*10000)}</Text>
+            <p>Seus {newTickets.length} bilhetes foram gerados com sucesso.</p>
+            <p>Acesse o menu <b>"Meus Bilhetes"</b> para ver seus códigos de rastreio.</p>
           </div>
         ),
       });
@@ -69,27 +88,24 @@ export default function RifaPage() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '100px' }}>
       
-      {/* Cabeçalho */}
       <Card style={{ marginBottom: 20, textAlign: 'center', borderTop: '4px solid #1890ff' }}>
         <Title level={2}>🍀 Rifa do iPhone 15 Pro</Title>
-        <Text type="secondary">Escolha seus números e pague com PIX ou Cartão.</Text>
+        <Text type="secondary">Escolha seus números e pague com PIX, Crédito ou Débito.</Text>
         <div style={{ marginTop: 15, display: 'flex', justifyContent: 'center', gap: 20 }}>
           <Statistic title="Valor por Número" value={10} precision={2} prefix="R$" />
           <Statistic title="Prêmio" value="iPhone 15" prefix="📱" />
         </div>
       </Card>
 
-      {/* Legenda */}
       <div className="status-legend">
         <div className="legend-item"><span className="dot available"></span> Disponível</div>
         <div className="legend-item"><span className="dot selected"></span> Selecionado</div>
         <div className="legend-item"><span className="dot sold"></span> Vendido</div>
       </div>
 
-      {/* Grade de Números */}
       <div className="numbers-grid">
         {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => {
-          const isSold = SOLD_NUMBERS.includes(num);
+          const isSold = soldNumbers.includes(num);
           const isSelected = selectedNumbers.includes(num);
           let className = 'number-btn';
           if (isSold) className += ' sold';
@@ -103,7 +119,6 @@ export default function RifaPage() {
         })}
       </div>
 
-      {/* Barra Flutuante */}
       {selectedNumbers.length > 0 && (
         <div className="floating-cart">
           <div className="cart-info">
@@ -118,24 +133,24 @@ export default function RifaPage() {
 
       {/* MODAL DE PAGAMENTO */}
       <Modal
-        title={null} // Título personalizado abaixo
+        title="Finalizar Compra"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         width={400}
         centered
       >
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <Title level={4} style={{ margin: 0 }}>Finalizar Compra</Title>
-          <Text type="secondary">Total a pagar: <b style={{ color: '#1890ff' }}>R$ {totalValue.toFixed(2)}</b></Text>
+        <div style={{ marginBottom: 20, textAlign: 'center' }}>
+           <Text type="secondary">Total a pagar: <b style={{ color: '#1890ff', fontSize: 18 }}>R$ {totalValue.toFixed(2)}</b></Text>
         </div>
 
-        {/* Seleção do Método */}
+        {/* Escolha PIX ou CARTÃO */}
         <Radio.Group 
           value={paymentMethod} 
           onChange={(e) => setPaymentMethod(e.target.value)} 
           style={{ width: '100%', marginBottom: 20 }}
           buttonStyle="solid"
+          size="large"
         >
           <Radio.Button value="pix" style={{ width: '50%', textAlign: 'center' }}>
             <QrcodeOutlined /> PIX
@@ -145,47 +160,52 @@ export default function RifaPage() {
           </Radio.Button>
         </Radio.Group>
 
-        <Divider />
+        <Divider style={{ margin: '12px 0' }} />
 
-        {/* Conteúdo Dinâmico: PIX */}
+        {/* --- OPÇÃO PIX --- */}
         {paymentMethod === 'pix' && (
-          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 15 }}>
-            <Text>Escaneie o QR Code para pagar:</Text>
-            
-            {/* Componente QRCode do Ant Design */}
-            <div style={{ padding: 10, border: '1px solid #eee', borderRadius: 8 }}>
-              <QRCode 
-                value={`00020126580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000520400005303986540${totalValue.toFixed(2)}5802BR5913Rifa Da Sorte6008Brasilia62070503***6304E2CA`} 
-                size={180} 
-                icon="https://cdn-icons-png.flaticon.com/512/10095/10095393.png" // Ícone do PIX opcional
-              />
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 15 }}>
+            <Text>Escaneie o QR Code:</Text>
+            <div style={{ padding: 10, border: '1px solid #eee', borderRadius: 8, alignSelf: 'center' }}>
+              <QRCode value={`PIX-TESTE-${totalValue}`} size={160} />
             </div>
-
-            <Button icon={<CopyOutlined />} onClick={() => message.success('Código PIX copiado!')}>
-              Copia e Cola
+            <Button icon={<CopyOutlined />} onClick={() => message.success('Código copiado!')}>
+              Copiar Código PIX
             </Button>
-            
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              <LockOutlined /> Aprovação imediata
-            </Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>Aprovação imediata</Text>
           </div>
         )}
 
-        {/* Conteúdo Dinâmico: Cartão */}
+        {/* --- OPÇÃO CARTÃO (CRÉDITO / DÉBITO) --- */}
         {paymentMethod === 'card' && (
           <Form layout="vertical">
-            <Form.Item label="Número do Cartão" required>
+            {/* SELEÇÃO CRÉDITO OU DÉBITO */}
+            <Form.Item label="Função do Cartão" required style={{ marginBottom: 12 }}>
+              <Radio.Group 
+                value={cardType} 
+                onChange={e => setCardType(e.target.value)}
+                block
+                optionType="button"
+              >
+                <Radio value="credito">Crédito</Radio>
+                <Radio value="debito">Débito</Radio>
+              </Radio.Group>
+            </Form.Item>
+
+            <Form.Item label="Número do Cartão" required style={{ marginBottom: 12 }}>
               <Input prefix={<CreditCardOutlined />} placeholder="0000 0000 0000 0000" />
             </Form.Item>
+            
             <Space>
-              <Form.Item label="Validade" required>
+              <Form.Item label="Validade" required style={{ marginBottom: 12 }}>
                 <Input placeholder="MM/AA" style={{ width: 100 }} />
               </Form.Item>
-              <Form.Item label="CVV" required>
+              <Form.Item label="CVV" required style={{ marginBottom: 12 }}>
                 <Input placeholder="123" style={{ width: 80 }} />
               </Form.Item>
             </Space>
-            <Form.Item label="Nome no Cartão" required>
+
+            <Form.Item label="Nome no Cartão" required style={{ marginBottom: 12 }}>
               <Input placeholder="Como está no cartão" />
             </Form.Item>
           </Form>
@@ -193,18 +213,16 @@ export default function RifaPage() {
 
         <Divider />
 
-        {/* Botão Final de Ação */}
         <Button 
           type="primary" 
           block 
           size="large" 
           onClick={handleConfirmPayment}
           loading={loading}
-          style={{ height: '45px', fontSize: '16px' }}
+          style={{ height: '50px', fontWeight: 'bold' }}
         >
-          {paymentMethod === 'pix' ? 'Já fiz o pagamento' : `Pagar R$ ${totalValue.toFixed(2)}`}
+          {paymentMethod === 'pix' ? 'Já fiz o pagamento' : `Pagar com ${cardType === 'credito' ? 'Crédito' : 'Débito'}`}
         </Button>
-
       </Modal>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Drawer, Avatar, message, FloatButton } from 'antd';
+import { Layout, Menu, Drawer, Avatar, Button, FloatButton } from 'antd';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   GiftOutlined, 
@@ -8,11 +8,10 @@ import {
   WhatsAppOutlined,
   UserOutlined
 } from '@ant-design/icons';
-
-// IMPORTANTE: Adicione esta linha para carregar o estilo da rifa!
-import './App.css'; 
+import './App.css'; // Importante para o estilo da rifa
 
 import RifaPage from './pages/RifaPage';
+import MeusBilhetesPage from './pages/MeusBilhetesPage'; // <--- Importe a nova página
 
 const { Header, Content, Footer } = Layout;
 
@@ -65,7 +64,8 @@ export default function App() {
           <div className="site-layout-content">
             <Routes>
               <Route path="/" element={<RifaPage />} />
-              <Route path="/meus-numeros" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Seus bilhetes aparecerão aqui</h2></div>} />
+              {/* Conecta a rota /meus-numeros à nova página */}
+              <Route path="/meus-numeros" element={<MeusBilhetesPage />} />
               <Route path="/premios" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Galeria de Prêmios</h2></div>} />
             </Routes>
           </div>
