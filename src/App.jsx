@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Drawer, Avatar, FloatButton } from 'antd';
+import { Layout, Menu, Drawer, Avatar, Button, FloatButton } from 'antd';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   GiftOutlined, HomeOutlined, TrophyOutlined, 
@@ -17,7 +17,7 @@ const { Header, Content, Footer } = Layout;
 
 function AppMenu() {
   const location = useLocation();
-  // Se estiver na rota /admin, mostra menu de admin, senão menu de cliente
+  // Se estiver na rota /admin, mostra menu de admin
   const isAdmin = location.pathname.startsWith('/admin');
 
   if (isAdmin) {
@@ -31,12 +31,12 @@ function AppMenu() {
     );
   }
 
+  // MENU DO CLIENTE (O botão de Admin sumiu daqui!)
   return (
     <Menu theme="dark" mode="horizontal" selectedKeys={[location.pathname]} style={{ background: 'transparent', flex: 1, justifyContent: 'center' }}
       items={[
         { key: '/', icon: <HomeOutlined />, label: <Link to="/">Prêmios</Link> },
         { key: '/meus-numeros', icon: <GiftOutlined />, label: <Link to="/meus-numeros">Meus Bilhetes</Link> },
-        { key: '/admin', icon: <UserOutlined />, label: <Link to="/admin">Sou Admin</Link> },
       ]}
     />
   );
@@ -58,6 +58,7 @@ export default function App() {
             <AppMenu />
           </div>
 
+          {/* O menu de perfil continua aqui */}
           <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff', cursor: 'pointer' }} onClick={() => setOpen(true)} />
         </Header>
 
@@ -69,7 +70,7 @@ export default function App() {
               <Route path="/rifa/:id" element={<RifaPage />} />
               <Route path="/meus-numeros" element={<MeusBilhetesPage />} />
               
-              {/* ÁREA DO ADMIN */}
+              {/* ÁREA DO ADMIN (Protegida) */}
               <Route path="/admin" element={<AdminPage />} />
             </Routes>
           </div>
@@ -79,9 +80,14 @@ export default function App() {
           RifaDaSorte ©2025
         </Footer>
 
+        {/* Drawer Lateral (Perfil) */}
         <Drawer title="Minha Conta" placement="right" onClose={() => setOpen(false)} open={open}>
           <p>Editar Perfil</p>
-          <Link to="/admin"><Button block style={{marginBottom: 10}}>Acessar Painel Admin</Button></Link>
+          <p>Histórico</p>
+          {/* Botão secreto para você entrar no admin */}
+          <Link to="/admin" onClick={() => setOpen(false)}>
+            <Button type="dashed" block style={{marginBottom: 10, marginTop: 20}}>Área Restrita</Button>
+          </Link>
           <Button danger block>Sair</Button>
         </Drawer>
         
