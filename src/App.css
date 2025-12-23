@@ -38,7 +38,7 @@
     min-height: 280px;
   }
   
-  /* Centraliza o site em telas grandes */
+  /* Centraliza o site em telas maiores para não esticar demais */
   @media (min-width: 1200px) {
     .site-layout-content {
       max-width: 1200px;
