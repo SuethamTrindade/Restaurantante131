@@ -9,10 +9,10 @@ import {
   UserOutlined
 } from '@ant-design/icons';
 
-// Importe sua nova página aqui
+// IMPORTANTE: Adicione esta linha para carregar o estilo da rifa!
+import './App.css'; 
+
 import RifaPage from './pages/RifaPage';
-// Você pode manter ou remover as páginas antigas conforme necessário
-// import ClientesPage from './pages/ClientesPage'; 
 
 const { Header, Content, Footer } = Layout;
 
@@ -49,28 +49,22 @@ export default function App() {
           background: '#001529',
           position: 'sticky', top: 0, zIndex: 1000
         }}>
-          {/* Logo da Rifa */}
           <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
             <GiftOutlined style={{ color: '#52c41a' }} />
             <span>RifaDaSorte</span>
           </div>
 
-          {/* Menu Central (Escondido em Mobile se necessário) */}
           <div style={{ flex: 1 }}>
             <AppMenu />
           </div>
 
-          {/* Perfil */}
           <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff', cursor: 'pointer' }} onClick={() => setOpen(true)} />
         </Header>
 
         <Content>
           <div className="site-layout-content">
             <Routes>
-              {/* Rota principal agora é a Rifa */}
               <Route path="/" element={<RifaPage />} />
-              
-              {/* Placeholder para outras rotas */}
               <Route path="/meus-numeros" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Seus bilhetes aparecerão aqui</h2></div>} />
               <Route path="/premios" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Galeria de Prêmios</h2></div>} />
             </Routes>
@@ -81,14 +75,12 @@ export default function App() {
           RifaDaSorte ©2025 - Participe e Concorra!
         </Footer>
 
-        {/* Drawer Lateral (Perfil) */}
         <Drawer title="Minha Conta" placement="right" onClose={() => setOpen(false)} open={open}>
           <p>Histórico de Compras</p>
           <p>Configurações</p>
           <Button danger block>Sair</Button>
         </Drawer>
         
-        {/* Botão de Suporte Flutuante */}
         <FloatButton icon={<WhatsAppOutlined />} type="primary" style={{ right: 24, bottom: 100 }} tooltip="Suporte WhatsApp" />
       </Layout>
     </Router>
