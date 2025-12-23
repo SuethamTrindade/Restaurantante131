@@ -1,186 +1,95 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Drawer, Avatar, List, message, Divider } from 'antd';
+import { Layout, Menu, Button, Drawer, Avatar, message, FloatButton } from 'antd';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  UserOutlined, 
-  CoffeeOutlined, 
-  ShoppingCartOutlined, 
-  BarChartOutlined,
-  AppstoreOutlined,
-  SettingOutlined,
-  BellOutlined,
-  LogoutOutlined,
-  SafetyCertificateOutlined,
-  EditOutlined
+  GiftOutlined, 
+  HomeOutlined, 
+  TrophyOutlined,
+  WhatsAppOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 
-// Seus componentes (mantendo as importações)
-import PratosPage from './pages/PratosPage';
-import ClientesPage from './pages/ClientesPage';
-import PedidosPage from './pages/PedidosPage';
-import RelatorioPedidosPorCliente from './pages/RelatorioPedidosPorCliente';
+// Importe sua nova página aqui
+import RifaPage from './pages/RifaPage';
+// Você pode manter ou remover as páginas antigas conforme necessário
+// import ClientesPage from './pages/ClientesPage'; 
 
 const { Header, Content, Footer } = Layout;
 
-// Componente do Menu Principal
 function AppMenu() {
   const location = useLocation();
-  
-  const getSelectedKey = () => {
-    const path = location.pathname;
-    if (path === '/clientes') return '1';
-    if (path === '/') return '2';
-    if (path === '/pedidos') return '3';
-    if (path === '/relatorio') return '4';
-    return '2';
-  };
-
   const menuItems = [
-    { key: '1', icon: <UserOutlined />, label: <Link to="/clientes">Clientes</Link> },
-    { key: '2', icon: <CoffeeOutlined />, label: <Link to="/">Pratos</Link> },
-    { key: '3', icon: <ShoppingCartOutlined />, label: <Link to="/pedidos">Pedidos</Link> },
-    { key: '4', icon: <BarChartOutlined />, label: <Link to="/relatorio">Relatórios</Link> },
+    { key: '/', icon: <HomeOutlined />, label: <Link to="/">Sorteio Atual</Link> },
+    { key: '/meus-numeros', icon: <GiftOutlined />, label: <Link to="/meus-numeros">Meus Bilhetes</Link> },
+    { key: '/premios', icon: <TrophyOutlined />, label: <Link to="/premios">Prêmios</Link> },
   ];
 
   return (
     <Menu
       theme="dark"
       mode="horizontal"
-      selectedKeys={[getSelectedKey()]}
+      selectedKeys={[location.pathname]}
       items={menuItems}
-      style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}
+      style={{ flex: 1, minWidth: 0, justifyContent: 'center', background: 'transparent' }}
     />
   );
 }
 
 export default function App() {
-  // Estado para controlar se a aba (Drawer) está aberta ou fechada
   const [open, setOpen] = useState(false);
-
-  const showDrawer = () => setOpen(true);
-  const onClose = () => setOpen(false);
-
-  const handleLogout = () => {
-    message.loading('Saindo do sistema...', 1)
-      .then(() => message.success('Logout realizado com sucesso!'));
-    onClose();
-  };
 
   return (
     <Router>
       <Layout style={{ minHeight: '100vh' }}>
-        {/* HEADER PROFISSIONAL */}
         <Header style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'space-between', // Separa os itens
-          padding: '0 24px',
+          justifyContent: 'space-between',
+          padding: '0 20px',
           background: '#001529',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          position: 'sticky', top: 0, zIndex: 1000, width: '100%'
+          position: 'sticky', top: 0, zIndex: 1000
         }}>
-          
-          {/* 1. LADO ESQUERDO: LOGO */}
-          <div className="logo-area" style={{ display: 'flex', alignItems: 'center', minWidth: '200px' }}>
-            <AppstoreOutlined style={{ fontSize: '24px', color: '#1890ff', marginRight: '10px' }} />
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '18px', whiteSpace: 'nowrap' }}>
-              Restaurante Admin
-            </span>
+          {/* Logo da Rifa */}
+          <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <GiftOutlined style={{ color: '#52c41a' }} />
+            <span>RifaDaSorte</span>
           </div>
 
-          {/* 2. CENTRO: MENU DE NAVEGAÇÃO */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          {/* Menu Central (Escondido em Mobile se necessário) */}
+          <div style={{ flex: 1 }}>
             <AppMenu />
           </div>
 
-          {/* 3. LADO DIREITO: AÇÕES E PERFIL */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: '100px', justifyContent: 'flex-end' }}>
-            {/* Botão de Notificação (Decorativo) */}
-            <Button 
-              type="text" 
-              icon={<BellOutlined style={{ color: 'white', fontSize: '18px' }} />} 
-              onClick={() => message.info('Sem novas notificações')}
-            />
-            
-            {/* O BOTÃO QUE ABRE A ABA DE OPÇÕES */}
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<SettingOutlined />}
-              onClick={showDrawer}
-              size="large"
-              style={{ border: 'none', boxShadow: '0 0 10px rgba(24,144,255, 0.5)' }}
-            />
-          </div>
+          {/* Perfil */}
+          <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff', cursor: 'pointer' }} onClick={() => setOpen(true)} />
         </Header>
 
-        {/* CONTEÚDO PRINCIPAL */}
         <Content>
           <div className="site-layout-content">
             <Routes>
-              <Route path="/clientes" element={<ClientesPage />} />
-              <Route path="/" element={<PratosPage />} />
-              <Route path="/pedidos" element={<PedidosPage />} />
-              <Route path="/relatorio" element={<RelatorioPedidosPorCliente />} />
+              {/* Rota principal agora é a Rifa */}
+              <Route path="/" element={<RifaPage />} />
+              
+              {/* Placeholder para outras rotas */}
+              <Route path="/meus-numeros" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Seus bilhetes aparecerão aqui</h2></div>} />
+              <Route path="/premios" element={<div style={{textAlign:'center', marginTop: 50}}><h2>Galeria de Prêmios</h2></div>} />
             </Routes>
           </div>
         </Content>
 
-        <Footer style={{ textAlign: 'center', color: '#888' }}>
-          Sistema de Gestão de Restaurante ©2025
+        <Footer style={{ textAlign: 'center', background: '#001529', color: 'rgba(255,255,255,0.6)' }}>
+          RifaDaSorte ©2025 - Participe e Concorra!
         </Footer>
 
-        {/* A ABA LATERAL (DRAWER) DE OPÇÕES */}
-        <Drawer
-          title="Painel do Usuário"
-          placement="right"
-          onClose={onClose}
-          open={open}
-          width={320}
-        >
-          {/* Cabeçalho do Perfil na Aba */}
-          <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-            <Avatar size={80} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff', marginBottom: '16px' }} />
-            <h3 style={{ margin: 0 }}>Administrador</h3>
-            <p style={{ color: '#888' }}>admin@restaurante.com</p>
-            <Button size="small" icon={<EditOutlined />} style={{ marginTop: '8px' }}>Editar Perfil</Button>
-          </div>
-
-          <Divider />
-
-          {/* Lista de Opções */}
-          <List
-            itemLayout="horizontal"
-            dataSource={[
-              { title: 'Configurações Gerais', icon: <SettingOutlined /> },
-              { title: 'Segurança e Senha', icon: <SafetyCertificateOutlined /> },
-              { title: 'Preferências de Notificação', icon: <BellOutlined /> },
-            ]}
-            renderItem={(item) => (
-              <List.Item>
-                <List.Item.Meta
-                  avatar={<Avatar icon={item.icon} style={{ backgroundColor: '#f0f2f5', color: '#555' }} />}
-                  title={<a onClick={() => message.info(`Abrindo ${item.title}...`)}>{item.title}</a>}
-                />
-              </List.Item>
-            )}
-          />
-
-          {/* Rodapé da Aba com Botão Sair */}
-          <div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '24px', left: 0, borderTop: '1px solid #f0f0f0' }}>
-            <Button 
-              type="primary" 
-              danger 
-              block 
-              icon={<LogoutOutlined />} 
-              onClick={handleLogout}
-              size="large"
-            >
-              Sair do Sistema
-            </Button>
-          </div>
+        {/* Drawer Lateral (Perfil) */}
+        <Drawer title="Minha Conta" placement="right" onClose={() => setOpen(false)} open={open}>
+          <p>Histórico de Compras</p>
+          <p>Configurações</p>
+          <Button danger block>Sair</Button>
         </Drawer>
-
+        
+        {/* Botão de Suporte Flutuante */}
+        <FloatButton icon={<WhatsAppOutlined />} type="primary" style={{ right: 24, bottom: 100 }} tooltip="Suporte WhatsApp" />
       </Layout>
     </Router>
   );

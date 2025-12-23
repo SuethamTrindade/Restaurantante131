@@ -1,47 +1,98 @@
-/* Reset básico */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ... Mantenha o reset básico anterior ... */
+
+/* Estilos da Rifa */
+.status-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-/* Garante que o app ocupe a altura total */
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  background-color: #f0f2f5; /* Cor de fundo padrão de dashboards profissionais */
-}
-
-/* Remove a estilização padrão do Vite que centralizava tudo */
-#root {
-  text-align: left;
-  display: block;
-  max-width: none;
-  padding: 0;
-}
-
-/* Estilo para o Logo no Header */
-.logo-area {
+.legend-item {
   display: flex;
   align-items: center;
-  margin-right: 40px;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot.available { background-color: #fff; border: 2px solid #d9d9d9; }
+.dot.selected { background-color: #1890ff; border: 2px solid #1890ff; }
+.dot.sold { background-color: #ff4d4f; border: 2px solid #ff4d4f; }
+
+/* Grade de Números Responsiva */
+.numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 12px;
+  padding-bottom: 100px; /* Espaço para o carrinho flutuante */
+}
+
+.number-btn {
+  height: 60px;
+  background-color: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 50%; /* Deixa redondo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
   font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.number-btn:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+  transform: translateY(-2px);
+}
+
+.number-btn.selected {
+  background-color: #1890ff;
   color: white;
-  white-space: nowrap;
+  border-color: #1890ff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(24,144,255,0.4);
 }
 
-/* Ajuste responsivo para o conteúdo */
-.site-layout-content {
-  margin: 24px 16px;
-  padding: 24px;
-  min-height: 280px;
+.number-btn.sold {
+  background-color: #ff4d4f;
+  color: white;
+  border-color: #ff4d4f;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* Em telas maiores, centraliza o conteúdo com um limite para não esticar demais */
-@media (min-width: 1200px) {
-  .site-layout-content {
-    max-width: 1200px;
-    margin: 24px auto; /* Centraliza horizontalmente */
-  }
+/* Barra Flutuante */
+.floating-cart {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 21, 41, 0.95);
+  padding: 15px 30px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  width: 90%;
+  max-width: 500px;
+  justify-content: space-between;
+}
+
+.cart-info {
+  display: flex;
+  flex-direction: column;
 }
